@@ -25,7 +25,7 @@ void draw_animation();
 
 void play_notes(std::string song);
 void play_wav();
-void filters(int frequency);
+void filters_file(int frequency);
 void microphone();
 
 int tone_volume = 5;
@@ -42,8 +42,8 @@ void loop() {
     // tone_gen_loop();
     //play_notes(put something here);  
     //play_wav();
-    microphone();
-    // filters_file(put something here); 
+    // microphone();
+    filters_file(440); 
 }
 
 
@@ -121,6 +121,18 @@ void microphone() {
                 delay(100);
             }
         }
+        //Edits below
+        display_text("Filtering", 1);
+        if (bandRejectFilter(FILE_NAME_RECORDER, FILTERED_FILENAME, 440)){
+            display_text("YES", 1);
+        }else{
+            display_text("NOOOOOO", 1);
+        }
+        Yboard.set_all_leds_color(0, 255, 0);
+        display_text("Playing filtered file", 1);
+        Yboard.play_sound_file(FILTERED_FILENAME);
+        Yboard.set_all_leds_color(0, 0, 0);
+        clear_display();
     }
 
     if (currentMillis - previousMillis >= 5) {
