@@ -1,8 +1,8 @@
 #include "Arduino.h"
-#include "yboard.h"
-#include "tone_gen.h"
-#include "filters.h"
 #include "display.h"
+#include "filters.h"
+#include "tone_gen.h"
+#include "yboard.h"
 
 std::string FILENAME = "/sd_card/ode_to_joy.wav";
 std::string FILTERED_FILENAME = "/sd_card/filtered.wav";
@@ -13,7 +13,6 @@ void play_notes(std::string song);
 void play_wav();
 void filters(int frequency);
 
-
 void setup() {
     Serial.begin(9600);
     Yboard.setup();
@@ -22,11 +21,10 @@ void setup() {
 
 void loop() {
     tone_gen_loop();
-    //play_notes(put something here);  
-    //play_wav();
-    //filters(put something here); 
+    // play_notes(put something here);
+    // play_wav();
+    // filters(put something here);
 }
-
 
 // Functions for playing notes and wav files
 bool sd_check() {
@@ -55,7 +53,9 @@ void play_notes(std::string song) {
 }
 void play_wav() {
     if (Yboard.get_button(1)) {
-        if (!sd_check()) return;
+        if (!sd_check()) {
+            return;
+        }
         Yboard.set_sound_file_volume(wav_volume);
         Yboard.set_all_leds_color(0, 255, 0);
         display_text("Playing wave file", 1);
@@ -66,7 +66,9 @@ void play_wav() {
 }
 void filters(int frequency) {
     if (Yboard.get_button(1)) {
-        if (!sd_check()) return;
+        if (!sd_check()) {
+            return;
+        }
         Yboard.set_sound_file_volume(wav_volume);
         Yboard.set_all_leds_color(0, 255, 0);
         display_text("Playing unfiltered   file", 1);
@@ -75,8 +77,10 @@ void filters(int frequency) {
         Yboard.set_all_leds_color(0, 0, 0);
     }
     if (Yboard.get_button(2)) {
-        if (!sd_check()) return;
-        Yboard.set_sound_file_volume(wav_volume*2);
+        if (!sd_check()) {
+            return;
+        }
+        Yboard.set_sound_file_volume(wav_volume * 2);
         Yboard.set_all_leds_color(0, 0, 255);
         display_text("Filtering", 1);
         bandRejectFilter(FILENAME, FILTERED_FILENAME, frequency);
@@ -87,10 +91,3 @@ void filters(int frequency) {
         clear_display();
     }
 }
-
-
-
-
-
-
-
