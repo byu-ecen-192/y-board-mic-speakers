@@ -41,7 +41,7 @@ void loop() {
     // play_notes(put something here);
     // play_song();
     // filter_tone();
-    record();
+    // record();
 }
 
 // Functions for playing notes and wav files
