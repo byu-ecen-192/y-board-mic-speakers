@@ -31,15 +31,25 @@ void record();
 
 void setup() {
     Serial.begin(115200);
-    AudioToolsLogger.begin(Serial, AudioToolsLogLevel::Info);
+    //AudioToolsLogger.begin(Serial, AudioToolsLogLevel::Info);
+
     Yboard.setup();
+    delay(100); // Display needs time to initialize
+    Yboard.display.clearDisplay();
+    Yboard.display.setTextColor(1,0);
+    Yboard.display.setRotation(90); // Can be 0, 90, 180, or 270
+    Yboard.display.setTextWrap(false);
+    uint8_t text_size = 1;
+    Yboard.display.setTextSize(text_size);
+    Yboard.display.setCursor(0, 0);
+
     tone_gen_setup(tone_volume);
 }
 
 void loop() {
     // tone_gen_loop();
-    // play_notes(put something here);
-    // play_song();
+    // play_notes(mario);
+    play_song();
     // filter_tone();
     // record();
 }
@@ -47,25 +57,35 @@ void loop() {
 // Functions for playing notes and wav files
 bool sd_check(std::string filename) {
     if (!SD.exists(filename.c_str())) {
-        display_text("Insert SD card and reset", 1);
+        Yboard.display.clearDisplay();
+        Yboard.display.setCursor(0, 0);
+        Yboard.display.write("Insert SD and Reset");
+        Yboard.display.display();
         for (int i = 0; i < 5; i++) {
             Yboard.set_all_leds_color(255, 0, 0);
             delay(250);
             Yboard.set_all_leds_color(0, 0, 0);
             delay(250);
         }
-        clear_display();
+        Yboard.display.clearDisplay();
+        Yboard.display.display();
         return false;
     }
     return true;
 }
 void play_notes(std::string song) {
+    Yboard.display.clearDisplay();
+    Yboard.display.setCursor(0, 0);
+    Yboard.display.write("Press BTN1 to play");
+    Yboard.display.display();
     if (Yboard.get_button(1)) {
         Yboard.set_all_leds_color(0, 255, 0);
-        std::string display_string = "Playing notes";
-        display_text(display_string, 1);
+        Yboard.display.clearDisplay();
+        Yboard.display.setCursor(0, 0);
+        Yboard.display.write("Playing notes");
+        Yboard.display.display();
         Yboard.play_notes(song);
-        clear_display();
+        Yboard.display.clearDisplay();
         Yboard.set_all_leds_color(0, 0, 0);
     }
 }
@@ -77,14 +97,21 @@ void play_song() {
         }
         Yboard.set_sound_file_volume(wav_volume);
         Yboard.set_all_leds_color(0, 255, 0);
-        display_text("Playing song", 1);
+
+        Yboard.display.clearDisplay();
+        Yboard.display.setCursor(0, 0);
+        Yboard.display.write("Playing Song");
+        Yboard.display.display();
 
         // Set up filter (none)
         volume.setVolume(0.5);
         filter_stream.setFilter(0, nullptr);
 
         play_wav_file(SONG_FILENAME);
-        clear_display();
+
+        Yboard.display.clearDisplay();
+        Yboard.display.display();    
+
         Yboard.set_all_leds_color(0, 0, 0);
     }
 }
@@ -96,14 +123,19 @@ void filter_tone() {
         }
         Yboard.set_sound_file_volume(wav_volume);
         Yboard.set_all_leds_color(0, 255, 0);
-        display_text("Playing unfiltered   file", 1);
+
+        Yboard.display.clearDisplay();
+        Yboard.display.setCursor(0, 0);
+        Yboard.display.write("Playing unfiltered file");
+        Yboard.display.display();
 
         // Set up filter (none)
         volume.setVolume(0.5);
         filter_stream.setFilter(0, nullptr);
 
         play_wav_file(TONE_FILENAME);
-        clear_display();
+        Yboard.display.clearDisplay();
+        Yboard.display.display();
         Yboard.set_all_leds_color(0, 0, 0);
     }
     if (Yboard.get_button(2)) {
@@ -112,7 +144,10 @@ void filter_tone() {
         }
         Yboard.set_sound_file_volume(wav_volume * 2);
         Yboard.set_all_leds_color(0, 0, 255);
-        display_text("Playing filtered file", 1);
+        Yboard.display.clearDisplay();
+        Yboard.display.setCursor(0, 0);
+        Yboard.display.write("Playing filtered file");
+        Yboard.display.display();
 
         // Set up filter (band reject)
         volume.setVolume(1.0);
@@ -120,7 +155,8 @@ void filter_tone() {
 
         play_wav_file(TONE_FILENAME);
         Yboard.set_all_leds_color(0, 0, 0);
-        clear_display();
+        Yboard.display.clearDisplay();
+        Yboard.display.display();
     }
 }
 
@@ -130,7 +166,11 @@ void record() {
         while (Yboard.get_button(1)) {
             if (started_recording) {
                 Yboard.set_all_leds_color(255, 0, 0);
-                display_text("Recording", 1);
+
+                Yboard.display.clearDisplay();
+                Yboard.display.setCursor(0, 0);
+                Yboard.display.write("Recording...");
+                Yboard.display.display();
                 delay(100);
             } else {
                 Yboard.set_all_leds_color(255, 0, 0);
@@ -145,7 +185,8 @@ void record() {
             Yboard.stop_recording();
         }
 
-        clear_display();
+        Yboard.display.clearDisplay();
+        Yboard.display.display();
         Yboard.set_all_leds_color(0, 0, 0);
     }
 
@@ -157,24 +198,34 @@ void record() {
         Yboard.set_all_leds_color(0, 255, 0);
 
         if (Yboard.get_switch(1)) {
-            display_text("Playing low pass     filtered recording", 1);
+            Yboard.display.clearDisplay();
+            Yboard.display.setCursor(0, 0);
+            Yboard.display.write("Playing low pass filtered recording");
+            Yboard.display.display();
             // Setup filter (low pass)
             volume.setVolume(1.0);
             filter_stream.setFilter(0, new FIR<float>(low_pass_coef));
         } else if (Yboard.get_switch(2)) {
-            display_text("Playing band pass    filtered recording", 1);
+            Yboard.display.clearDisplay();
+            Yboard.display.setCursor(0, 0);
+            Yboard.display.write("Playing band pass filtered recording");
+            Yboard.display.display();
             // Setup filter (band pass)
             volume.setVolume(1.0);
             filter_stream.setFilter(0, new FIR<float>(band_pass_coef));
         } else {
-            display_text("Playing unfiltered   recording", 1);
+            Yboard.display.clearDisplay();
+            Yboard.display.setCursor(0, 0);
+            Yboard.display.write("Playing unfiltered recording");
+            Yboard.display.display();
             // Setup filter (none)
             volume.setVolume(0.5);
             filter_stream.setFilter(0, nullptr);
         }
 
         play_wav_file(RECORDING_FILENAME);
-        clear_display();
+        Yboard.display.clearDisplay();
+        Yboard.display.display();
         Yboard.set_all_leds_color(0, 0, 0);
     }
 }

@@ -5,6 +5,8 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
+
 char current_note = 'A';
 int octave = 4;
 int volume = 5;
@@ -45,13 +47,15 @@ double find_frequency() {
 }
 void write_to_display() {
     std::stringstream ss;
-    ss << std::left << std::setw(21) << ("Note: " + std::string(1, current_note) + std::to_string(octave));
-    std::stringstream freq_stream;
-    freq_stream << "Frequency: " << std::fixed << std::setprecision(2) << find_frequency() << "Hz";
-    ss << std::left << std::setw(21) << freq_stream.str();
-    ss << std::left << std::setw(21) << ("Volume: " + std::to_string(volume));
-    clear_display();
-    display_text(ss.str(), 1);
+    ss << "Note: " << current_note << octave << "\n";
+    ss << "Frequency: " << std::fixed << std::setprecision(2) << find_frequency() << "Hz\n";
+    ss << "Volume: " << volume << "\n";
+    std::string display_str = ss.str();
+    const char* display_cstr = display_str.c_str();
+    Yboard.display.clearDisplay();
+    Yboard.display.setCursor(0, 0);
+    Yboard.display.write(display_cstr);
+    Yboard.display.display();
 }
 void octave_change(int amount) {
     octave = 4 + amount;
@@ -62,37 +66,16 @@ void octave_change(int amount) {
 std::string secret = "T150 O4 C8 D8 F8 D8 O5 A8. A8. O4 G2 R8 C8 D8 F8 D8 G8. G8. F2";
 void note_control() {
     static int last_pot_val = 0;
-    static bool noisy = false;
-    int pot_val = map(Yboard.get_knob(),0,100,0,14);
-    int average = 0;
-
-
-    int num_samples = 5;
-    for (int i = 0; i < num_samples; i++) {
-        int current_reading = map(Yboard.get_knob(),0,100,0,14);
-        average += current_reading;
-    }
-    if (average % num_samples != 0) {
-        pot_val = average / num_samples;
-        noisy = true;
-    }
-    else {
-        noisy = false;
-    }
-
+    int pot_val = Yboard.get_knob() % 28;
+    if( pot_val < 0) pot_val = 0;
     
-    if (pot_val != last_pot_val && !noisy) {
+    if (pot_val != last_pot_val) {
         
         current_note = 'A' + pot_val;
-        if (current_note > 'A' + 13) {
-            octave_change(2);
-            current_note -= 14;
-        }
-        else if (current_note > 'A' + 6) {
-            octave_change(1);
-            current_note -= 7;
-        }
-        else {
+        if (current_note > 'A' + 6) {
+            octave_change((int)(current_note - 'A') / 7);
+            current_note -= 7 * ((int)(current_note - 'A') / 7);
+        } else {
             octave_change(0);
         }
         write_to_display();
@@ -110,7 +93,6 @@ void tone_gen_setup(int new_volume)
     else if (volume < 1) {
         volume = 1;
     }
-    setup_display(0x3C);
     octave_change(0);
     std::string input_string = 'V' + std::to_string(volume);
     Yboard.play_notes(input_string);
@@ -118,10 +100,10 @@ void tone_gen_setup(int new_volume)
 
 void tone_gen_loop()
 {   
-    static bool first_loop = false;
-    if (!first_loop) {
+    static bool first_loop = true;
+    if (first_loop) {
         write_to_display();
-        first_loop = true;
+        first_loop = false;
     }
     note_control();   
     if (Yboard.get_button(1)) {
@@ -130,6 +112,7 @@ void tone_gen_loop()
 
         Yboard.set_all_leds_color(0, 255, 0);
         while (Yboard.get_button(1)) {
+            Serial.println(("Playing note: " + input_string).c_str());
             delay(10);
             Yboard.play_notes(input_string);
         }
